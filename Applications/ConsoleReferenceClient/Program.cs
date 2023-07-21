@@ -78,7 +78,7 @@ namespace Quickstarts.ConsoleReferenceClient
             bool jsonvalues = false;
             bool verbose = false;
             bool subscribe = false;
-            bool noSecurity = false;
+            bool noSecurity = true;
             string password = null;
             int timeout = Timeout.Infinite;
             string logFile = null;
@@ -114,7 +114,7 @@ namespace Quickstarts.ConsoleReferenceClient
                 var extraArg = ConsoleUtils.ProcessCommandLine(output, args, options, ref showHelp, "REFCLIENT", false);
 
                 // connect Url?
-                Uri serverUrl = new Uri("opc.tcp://localhost:62541/Quickstarts/ReferenceServer");
+                Uri serverUrl = new Uri("opc.tcp://uademo.prosysopc.com:53530/OPCUA/SimulationServer");
                 if (!string.IsNullOrEmpty(extraArg))
                 {
                     serverUrl = new Uri(extraArg);
@@ -208,6 +208,7 @@ namespace Quickstarts.ConsoleReferenceClient
                         }
 
                         bool connected = await uaClient.ConnectAsync(serverUrl.ToString(), !noSecurity, quitCTS.Token).ConfigureAwait(false);
+
                         if (connected)
                         {
                             output.WriteLine("Connected! Ctrl-C to quit.");
@@ -296,10 +297,10 @@ namespace Quickstarts.ConsoleReferenceClient
                             else
                             {
                                 // Run tests for available methods on reference server.
-                                samples.ReadNodes(uaClient.Session);
-                                samples.WriteNodes(uaClient.Session);
-                                samples.Browse(uaClient.Session);
-                                samples.CallMethod(uaClient.Session);
+                                //samples.ReadNodes(uaClient.Session);
+                                //samples.WriteNodes(uaClient.Session);
+                                //samples.Browse(uaClient.Session);
+                                //samples.CallMethod(uaClient.Session);
                                 samples.SubscribeToDataChanges(uaClient.Session, 120_000);
 
                                 output.WriteLine("Waiting...");

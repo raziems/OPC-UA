@@ -41,6 +41,8 @@ using Newtonsoft.Json;
 using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Client.ComplexTypes;
+using System.Data.SqlClient;
+using Newtonsoft.Json.Linq;
 
 namespace Quickstarts
 {
@@ -91,11 +93,12 @@ namespace Quickstarts
                 ReadValueIdCollection nodesToRead = new ReadValueIdCollection()
                 {
                     // Value of ServerStatus
-                    new ReadValueId() { NodeId = Variables.Server_ServerStatus, AttributeId = Attributes.Value },
+                    //new ReadValueId() { NodeId = Variables.Server_ServerStatus, AttributeId = Attributes.Value },
+                    new ReadValueId() { NodeId = "ns=6;s=MyLevel", AttributeId = Attributes.Value },
                     // BrowseName of ServerStatus_StartTime
-                    new ReadValueId() { NodeId = Variables.Server_ServerStatus_StartTime, AttributeId = Attributes.BrowseName },
+                    //new ReadValueId() { NodeId = Variables.Server_ServerStatus_StartTime, AttributeId = Attributes.BrowseName },
                     // Value of ServerStatus_StartTime
-                    new ReadValueId() { NodeId = Variables.Server_ServerStatus_StartTime, AttributeId = Attributes.Value }
+                    //new ReadValueId() { NodeId = Variables.Server_ServerStatus_StartTime, AttributeId = Attributes.Value }
                 };
 
                 // Read the node attributes
@@ -113,20 +116,55 @@ namespace Quickstarts
                 // Validate the results
                 m_validateResponse(resultsValues, nodesToRead);
 
-                // Display the results.
-                foreach (DataValue result in resultsValues)
-                {
-                    m_output.WriteLine("Read Value = {0} , StatusCode = {1}", result.Value, result.StatusCode);
-                }
+                //// Display the results.
+                //foreach (DataValue result in resultsValues)
+                //{
+                //    m_output.WriteLine("Read Value = {0} , StatusCode = {1}", result.Value, result.StatusCode);
+                //}
                 #endregion
 
-                #region Read the Value attribute of a node by calling the Session.ReadValue method
-                // Read Server NamespaceArray
-                m_output.WriteLine("Reading Value of NamespaceArray node...");
-                DataValue namespaceArray = session.ReadValue(Variables.Server_NamespaceArray);
-                // Display the result
-                m_output.WriteLine($"NamespaceArray Value = {namespaceArray}");
-                #endregion
+
+
+                // Save the value and status code into the MS SQL database
+                string connectionString = "Data Source=localhost;Initial Catalog=Demo;User ID=sa;Password=123@abc;";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    foreach (DataValue result in resultsValues)
+                    {
+                        // Assuming result is a DataValue object
+                        object value = result.Value;                        
+                        StatusCode statusCode = result.StatusCode;
+
+                        // Save the value and status code into the database table
+                        string query = "INSERT INTO OPC_UA (Value, StatusCode, GeneratedDate, GeneratedBy) VALUES (@Value, @StatusCode, @GeneratedDate, @GeneratedBy)";
+                        using (SqlCommand command = new SqlCommand(query, connection))
+                        {
+                            command.Parameters.AddWithValue("@Value", value);
+                            command.Parameters.AddWithValue("@StatusCode", statusCode.ToString());
+                            command.Parameters.AddWithValue("@GeneratedDate", DateTime.Now);
+                            command.Parameters.AddWithValue("@GeneratedBy", "System");
+                            command.ExecuteNonQuery();
+                        }
+
+                        // Print the saved values (optional)
+                        Console.WriteLine("Value = {0}, StatusCode = {1}", value, statusCode);
+                    }
+
+                  
+
+                    // Close the database connection when done
+                    connection.Close();
+                }
+
+                //#region Read the Value attribute of a node by calling the Session.ReadValue method
+                //// Read Server NamespaceArray
+                //m_output.WriteLine("Reading Value of NamespaceArray node...");
+                //DataValue namespaceArray = session.ReadValue(Variables.Server_NamespaceArray);
+                //// Display the result
+                //m_output.WriteLine($"NamespaceArray Value = {namespaceArray}");
+                //#endregion
             }
             catch (Exception ex)
             {
@@ -226,7 +264,7 @@ namespace Quickstarts
                 browser.ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences;
                 browser.IncludeSubtypes = true;
 
-                NodeId nodeToBrowse = ObjectIds.Server;
+                NodeId nodeToBrowse = ObjectIds.Server;//node 2253
 
                 // Call Browse service
                 m_output.WriteLine("Browsing {0} node...", nodeToBrowse);
@@ -321,43 +359,69 @@ namespace Quickstarts
 
                 // Create MonitoredItems for data changes (Reference Server)
 
-                MonitoredItem intMonitoredItem = new MonitoredItem(subscription.DefaultItem);
-                // Int32 Node - Objects\CTT\Scalar\Simulation\Int32
-                intMonitoredItem.StartNodeId = new NodeId("ns=2;s=Scalar_Simulation_Int32");
-                intMonitoredItem.AttributeId = Attributes.Value;
-                intMonitoredItem.DisplayName = "Int32 Variable";
-                intMonitoredItem.SamplingInterval = 1000;
-                intMonitoredItem.QueueSize = 10;
-                intMonitoredItem.DiscardOldest = true;
-                intMonitoredItem.Notification += OnMonitoredItemNotification;
+                //MonitoredItem intMonitoredItem = new MonitoredItem(subscription.DefaultItem);
+                //// Int32 Node - Objects\CTT\Scalar\Simulation\Int32
+                //intMonitoredItem.StartNodeId = new NodeId("ns=2;s=Scalar_Simulation_Int32");
+                //intMonitoredItem.AttributeId = Attributes.Value;
+                //intMonitoredItem.DisplayName = "Int32 Variable";
+                //intMonitoredItem.SamplingInterval = 1000;
+                //intMonitoredItem.QueueSize = 10;
+                //intMonitoredItem.DiscardOldest = true;
+                //intMonitoredItem.Notification += OnMonitoredItemNotification;
 
-                subscription.AddItem(intMonitoredItem);
+                //subscription.AddItem(intMonitoredItem);
 
-                MonitoredItem floatMonitoredItem = new MonitoredItem(subscription.DefaultItem);
-                // Float Node - Objects\CTT\Scalar\Simulation\Float
-                floatMonitoredItem.StartNodeId = new NodeId("ns=2;s=Scalar_Simulation_Float");
-                floatMonitoredItem.AttributeId = Attributes.Value;
-                floatMonitoredItem.DisplayName = "Float Variable";
-                floatMonitoredItem.SamplingInterval = 1000;
-                floatMonitoredItem.QueueSize = 10;
-                floatMonitoredItem.Notification += OnMonitoredItemNotification;
+                //MonitoredItem floatMonitoredItem = new MonitoredItem(subscription.DefaultItem);
+                //// Float Node - Objects\CTT\Scalar\Simulation\Float
+                //floatMonitoredItem.StartNodeId = new NodeId("ns=2;s=Scalar_Simulation_Float");
+                //floatMonitoredItem.AttributeId = Attributes.Value;
+                //floatMonitoredItem.DisplayName = "Float Variable";
+                //floatMonitoredItem.SamplingInterval = 1000;
+                //floatMonitoredItem.QueueSize = 10;
+                //floatMonitoredItem.Notification += OnMonitoredItemNotification;
 
-                subscription.AddItem(floatMonitoredItem);
+                //subscription.AddItem(floatMonitoredItem);
 
-                MonitoredItem stringMonitoredItem = new MonitoredItem(subscription.DefaultItem);
+                //MonitoredItem stringMonitoredItem = new MonitoredItem(subscription.DefaultItem);
+                //// String Node - Objects\CTT\Scalar\Simulation\String
+                //stringMonitoredItem.StartNodeId = new NodeId("ns=2;s=Scalar_Simulation_String");
+                //stringMonitoredItem.AttributeId = Attributes.Value;
+                //stringMonitoredItem.DisplayName = "String Variable";
+                //stringMonitoredItem.SamplingInterval = 1000;
+                //stringMonitoredItem.QueueSize = 10;
+                //stringMonitoredItem.Notification += OnMonitoredItemNotification;
+
+                //subscription.AddItem(stringMonitoredItem);
+
+                //Test start from here
+                MonitoredItem MyLevelMonitoredItem = new MonitoredItem(subscription.DefaultItem);
                 // String Node - Objects\CTT\Scalar\Simulation\String
-                stringMonitoredItem.StartNodeId = new NodeId("ns=2;s=Scalar_Simulation_String");
-                stringMonitoredItem.AttributeId = Attributes.Value;
-                stringMonitoredItem.DisplayName = "String Variable";
-                stringMonitoredItem.SamplingInterval = 1000;
-                stringMonitoredItem.QueueSize = 10;
-                stringMonitoredItem.Notification += OnMonitoredItemNotification;
+                MyLevelMonitoredItem.StartNodeId = new NodeId("ns=6;s=MyLevel");
+                MyLevelMonitoredItem.AttributeId = Attributes.Value;
+                MyLevelMonitoredItem.DisplayName = "MyLevel";
+                MyLevelMonitoredItem.SamplingInterval = 1000;
+                MyLevelMonitoredItem.QueueSize = 10;
+                // Handle the data change event
+                MyLevelMonitoredItem.Notification += OnMonitoredItemNotification;
 
-                subscription.AddItem(stringMonitoredItem);
+                // Add the monitored item to the subscription
+                subscription.AddItem(MyLevelMonitoredItem);
+
+                //Test end here
 
                 // Create the monitored items on Server side
                 subscription.ApplyChanges();
-                m_output.WriteLine("MonitoredItems created for SubscriptionId = {0}.", subscription.Id);
+                //m_output.WriteLine("MonitoredItems created for SubscriptionId = {0}.", subscription.Id);
+                Console.ReadKey();
+
+                #region Disconnect the OPC UA client and dispose the subscription when done
+                subscription.RemoveItem(MyLevelMonitoredItem);
+                subscription.Delete(true);
+                ////client.Disconnect();
+                ///
+                #endregion
+
+
             }
             catch (Exception ex)
             {
@@ -1003,7 +1067,39 @@ namespace Quickstarts
             {
                 // Log MonitoredItem Notification event
                 MonitoredItemNotification notification = e.NotificationValue as MonitoredItemNotification;
+
+                //DataValue result = e.NotificationValue as DataValue;
+                object value = notification.Value.Value;
+                object stationCode = notification.Value.StatusCode;
+
                 m_output.WriteLine("Notification: {0} \"{1}\" and Value = {2}.", notification.Message.SequenceNumber, monitoredItem.ResolvedNodeId, notification.Value);
+
+                //Save record into SQL Database
+                string connectionString = "Data Source=localhost;Initial Catalog=Demo;User ID=sa;Password=123@abc;";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    StatusCode statusCode = notification.Value.StatusCode;
+
+                    // Save the value and status code into the database table
+                    string query = "INSERT INTO OPC_UA (Value, StatusCode, GeneratedDate, GeneratedBy) VALUES (@Value, @StatusCode, @GeneratedDate, @GeneratedBy)";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Value", value);
+                        command.Parameters.AddWithValue("@StatusCode", statusCode.ToString());
+                        command.Parameters.AddWithValue("@GeneratedDate", DateTime.Now);
+                        command.Parameters.AddWithValue("@GeneratedBy", "System");
+                        command.ExecuteNonQuery();
+                    }
+
+                    // Print the saved values 
+                    Console.WriteLine("Save Value = {0}, StatusCode = {1}", value, statusCode);
+
+                    // Close the database connection
+                    connection.Close();
+                }
+
             }
             catch (Exception ex)
             {
